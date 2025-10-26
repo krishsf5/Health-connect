@@ -28,6 +28,5 @@
     "JWT_SECRET": "@jwt-secret",
     "CLIENT_ORIGIN": "@client-origin"
   },
-  "regions": ["all"],
   "outputDirectory": "dist"
 }
