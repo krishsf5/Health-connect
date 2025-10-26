@@ -4,6 +4,10 @@ import Login from "./pages/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorCreate from "./pages/DoctorCreate";
+import Appointments from "./pages/Appointments";
+import Messages from "./pages/Messages";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -16,11 +20,22 @@ export default function App() {
 
   useEffect(() => {
     if (location.pathname === "/doctor/create") return; // allow public doctor creation page
+
+    // Define valid routes for each user role
+    const validPatientRoutes = ["/patient", "/patient/appointments", "/patient/messages", "/patient/reports", "/patient/settings"];
+    const validDoctorRoutes = ["/doctor", "/doctor/appointments", "/doctor/messages", "/doctor/reports", "/doctor/settings"];
+
     if (user) {
-      if (user.role === "doctor") navigate("/doctor");
-      else navigate("/patient");
+      const validRoutes = user.role === "doctor" ? validDoctorRoutes : validPatientRoutes;
+      if (!validRoutes.includes(location.pathname)) {
+        // Redirect to appropriate dashboard if on invalid route
+        navigate(user.role === "doctor" ? "/doctor" : "/patient");
+      }
     } else {
-      navigate("/login");
+      // Only allow login and doctor creation for non-authenticated users
+      if (location.pathname !== "/login" && location.pathname !== "/doctor/create") {
+        navigate("/login");
+      }
     }
   }, [user, location.pathname]);
 
@@ -33,10 +48,10 @@ export default function App() {
 
   const navigation = [
     { name: 'Dashboard', href: user?.role === 'doctor' ? '/doctor' : '/patient', icon: 'LayoutDashboard' },
-    { name: 'Appointments', href: user?.role === 'doctor' ? '/doctor' : '/patient', icon: 'Calendar' },
-    { name: 'Messages', href: user?.role === 'doctor' ? '/doctor' : '/patient', icon: 'MessageCircle' },
-    { name: 'Reports', href: user?.role === 'doctor' ? '/doctor' : '/patient', icon: 'FileText' },
-    { name: 'Settings', href: user?.role === 'doctor' ? '/doctor' : '/patient', icon: 'Settings' },
+    { name: 'Appointments', href: user?.role === 'doctor' ? '/doctor/appointments' : '/patient/appointments', icon: 'Calendar' },
+    { name: 'Messages', href: user?.role === 'doctor' ? '/doctor/messages' : '/patient/messages', icon: 'MessageCircle' },
+    { name: 'Reports', href: user?.role === 'doctor' ? '/doctor/reports' : '/patient/reports', icon: 'FileText' },
+    { name: 'Settings', href: user?.role === 'doctor' ? '/doctor/settings' : '/patient/settings', icon: 'Settings' },
   ];
 
   const isActiveRoute = (href) => {
@@ -126,6 +141,14 @@ export default function App() {
             <Route path="/doctor/create" element={<DoctorCreate />} />
             <Route path="/patient" element={<PatientDashboard user={user} />} />
             <Route path="/doctor" element={<DoctorDashboard user={user} />} />
+            <Route path="/patient/appointments" element={<Appointments user={user} />} />
+            <Route path="/doctor/appointments" element={<Appointments user={user} />} />
+            <Route path="/patient/messages" element={<Messages user={user} />} />
+            <Route path="/doctor/messages" element={<Messages user={user} />} />
+            <Route path="/patient/reports" element={<Reports user={user} />} />
+            <Route path="/doctor/reports" element={<Reports user={user} />} />
+            <Route path="/patient/settings" element={<Settings user={user} />} />
+            <Route path="/doctor/settings" element={<Settings user={user} />} />
           </Routes>
         </main>
       </div>
