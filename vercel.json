@@ -23,10 +23,5 @@
       "dest": "/dist/$1"
     }
   ],
-  "env": {
-    "MONGODB_URI": "@mongodb-uri",
-    "JWT_SECRET": "@jwt-secret",
-    "CLIENT_ORIGIN": "@client-origin"
-  },
   "outputDirectory": "dist"
 }
