@@ -13,8 +13,8 @@ out
 .env.local
 .env.*.local
 
-# Server files (not needed for Vercel deployment, but keep api/ for serverless functions)
-server/
+# Server files - NOW INCLUDED for fullstack deployment
+# server/ (REMOVED - we need this for backend)
 # api/ (keep this for Vercel serverless functions)
 *.log
 npm-debug.log*
