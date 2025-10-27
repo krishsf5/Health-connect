@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import NotificationToggle from "../components/NotificationToggle";
 
 // Auto-detect API URL for both development and production
 const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
     return `${window.location.origin}/api`;
   }
-  return import.meta.env.VITE_API_URL || "http://localhost:5000";
+  return import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 };
 
 const API = getApiUrl();
@@ -173,17 +174,17 @@ export default function SettingsPage({ user: currentUser }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-950 dark:to-slate-900 p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.settings}</h1>
-          <p className="text-gray-600">Manage your account settings and preferences</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t.settings}</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your account settings and preferences</p>
         </div>
 
         {message && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            message.includes('success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          <div className={`mb-6 p-4 rounded-xl shadow-sm border ${
+            message.includes('success') ? 'bg-green-50 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-red-50 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
           }`}>
             {message}
           </div>
@@ -191,13 +192,13 @@ export default function SettingsPage({ user: currentUser }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Profile Settings */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">{t.profile_settings}</h2>
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-slate-800">
+            <div className="p-6 border-b border-gray-200/50 dark:border-slate-800">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.profile_settings}</h2>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   {t.name}
                 </label>
                 <input
@@ -205,12 +206,12 @@ export default function SettingsPage({ user: currentUser }) {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   {t.email}
                 </label>
                 <input
@@ -218,12 +219,12 @@ export default function SettingsPage({ user: currentUser }) {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   {t.phone}
                 </label>
                 <input
@@ -231,14 +232,14 @@ export default function SettingsPage({ user: currentUser }) {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
 
               {currentUser?.role === 'doctor' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                       {t.specialization}
                     </label>
                     <input
@@ -246,12 +247,12 @@ export default function SettingsPage({ user: currentUser }) {
                       name="specialization"
                       value={formData.specialization}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                       {t.experience}
                     </label>
                     <input
@@ -259,7 +260,7 @@ export default function SettingsPage({ user: currentUser }) {
                       name="experience"
                       value={formData.experience}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
                     />
                   </div>
                 </>
@@ -268,9 +269,9 @@ export default function SettingsPage({ user: currentUser }) {
           </div>
 
           {/* Preferences */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">{t.preferences}</h2>
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-slate-800">
+            <div className="p-6 border-b border-gray-200/50 dark:border-slate-800">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.preferences}</h2>
             </div>
             <div className="p-6 space-y-6">
               {/* Language */}
@@ -301,64 +302,82 @@ export default function SettingsPage({ user: currentUser }) {
 
               {/* Notifications */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-4">
                   {t.notifications}
                 </label>
-                <div className="space-y-3">
-                  <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t.email_notifications}</span>
-                    <input
-                      type="checkbox"
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <i data-lucide="mail" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t.email_notifications}</span>
+                    </div>
+                    <NotificationToggle
                       checked={preferences.notifications.email}
-                      onChange={(e) => handlePreferenceChange('notifications', 'email', e.target.checked)}
-                      className="rounded"
+                      onChange={(checked) => handlePreferenceChange('notifications', 'email', checked)}
+                      label=""
+                      icon="mail"
                     />
-                  </label>
-                  <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t.sms_notifications}</span>
-                    <input
-                      type="checkbox"
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <i data-lucide="smartphone" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t.sms_notifications}</span>
+                    </div>
+                    <NotificationToggle
                       checked={preferences.notifications.sms}
-                      onChange={(e) => handlePreferenceChange('notifications', 'sms', e.target.checked)}
-                      className="rounded"
+                      onChange={(checked) => handlePreferenceChange('notifications', 'sms', checked)}
+                      label=""
+                      icon="smartphone"
                     />
-                  </label>
-                  <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t.push_notifications}</span>
-                    <input
-                      type="checkbox"
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <i data-lucide="bell" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t.push_notifications}</span>
+                    </div>
+                    <NotificationToggle
                       checked={preferences.notifications.push}
-                      onChange={(e) => handlePreferenceChange('notifications', 'push', e.target.checked)}
-                      className="rounded"
+                      onChange={(checked) => handlePreferenceChange('notifications', 'push', checked)}
+                      label=""
+                      icon="bell"
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
 
               {/* Privacy */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-4">
                   {t.privacy}
                 </label>
-                <div className="space-y-3">
-                  <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t.profile_visible}</span>
-                    <input
-                      type="checkbox"
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <i data-lucide="eye" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t.profile_visible}</span>
+                    </div>
+                    <NotificationToggle
                       checked={preferences.privacy.profileVisible}
-                      onChange={(e) => handlePreferenceChange('privacy', 'profileVisible', e.target.checked)}
-                      className="rounded"
+                      onChange={(checked) => handlePreferenceChange('privacy', 'profileVisible', checked)}
+                      label=""
+                      icon="eye"
                     />
-                  </label>
-                  <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t.show_online}</span>
-                    <input
-                      type="checkbox"
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <i data-lucide="circle" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t.show_online}</span>
+                    </div>
+                    <NotificationToggle
                       checked={preferences.privacy.showOnlineStatus}
-                      onChange={(e) => handlePreferenceChange('privacy', 'showOnlineStatus', e.target.checked)}
-                      className="rounded"
+                      onChange={(checked) => handlePreferenceChange('privacy', 'showOnlineStatus', checked)}
+                      label=""
+                      icon="circle"
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -366,34 +385,34 @@ export default function SettingsPage({ user: currentUser }) {
         </div>
 
         {/* Security Section */}
-        <div className="bg-white rounded-lg shadow mt-8">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">{t.account_security}</h2>
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-slate-800 mt-8">
+          <div className="p-6 border-b border-gray-200/50 dark:border-slate-800">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.account_security}</h2>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-gray-200 rounded-lg p-4">
+              <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100/50 dark:hover:bg-slate-700/50 transition-colors duration-200">
                 <div className="flex items-center space-x-3 mb-3">
-                  <i data-lucide="lock" className="w-5 h-5 text-gray-400"></i>
-                  <h3 className="font-medium text-gray-900">{t.change_password}</h3>
+                  <i data-lucide="lock" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                  <h3 className="font-medium text-gray-900 dark:text-white">{t.change_password}</h3>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Update your password to keep your account secure
                 </p>
-                <button className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+                <button className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 text-sm font-medium transition-colors duration-200">
                   Change Password →
                 </button>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-4">
+              <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100/50 dark:hover:bg-slate-700/50 transition-colors duration-200">
                 <div className="flex items-center space-x-3 mb-3">
-                  <i data-lucide="shield" className="w-5 h-5 text-gray-400"></i>
-                  <h3 className="font-medium text-gray-900">{t.two_factor}</h3>
+                  <i data-lucide="shield" className="w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+                  <h3 className="font-medium text-gray-900 dark:text-white">{t.two_factor}</h3>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Add an extra layer of security to your account
                 </p>
-                <button className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+                <button className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 text-sm font-medium transition-colors duration-200">
                   Enable 2FA →
                 </button>
               </div>
@@ -406,17 +425,17 @@ export default function SettingsPage({ user: currentUser }) {
           <button
             onClick={handleSave}
             disabled={loading}
-            className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="bg-gradient-to-r from-teal-600 to-teal-700 text-white px-8 py-4 rounded-xl hover:from-teal-700 hover:to-teal-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-teal-600 disabled:hover:to-teal-700 flex items-center space-x-3 shadow-lg hover:shadow-xl hover:scale-105"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 <span>{t.loading}</span>
               </>
             ) : (
               <>
-                <i data-lucide="save" className="w-4 h-4"></i>
-                <span>{t.save_changes}</span>
+                <i data-lucide="save" className="w-5 h-5"></i>
+                <span className="font-medium">{t.save_changes}</span>
               </>
             )}
           </button>

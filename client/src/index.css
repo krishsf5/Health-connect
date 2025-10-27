@@ -14,28 +14,109 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  .dark body {
+    color: #e5e7eb; /* gray-200 */
+    background-color: #0b1220; /* near-slate-950 */
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300;
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300 dark:bg-slate-900/60 dark:border-slate-800 dark:shadow-none backdrop-blur;
   }
   .card-hover {
-    @apply hover:shadow-md hover:-translate-y-1;
+    @apply hover:shadow-md hover:-translate-y-1 dark:hover:shadow-slate-900/40;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] dark:focus:ring-offset-slate-950;
   }
   .btn-primary {
-    @apply bg-teal-600 text-white rounded-lg px-4 py-2 font-medium shadow-sm hover:bg-teal-700 hover:shadow-md transition-all duration-200;
+    @apply btn bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg hover:shadow-xl hover:from-teal-700 hover:to-teal-800 focus:ring-teal-400 dark:from-teal-500 dark:to-teal-600 dark:hover:from-teal-400 dark:hover:to-teal-500;
   }
+  .btn-secondary {
+    @apply btn bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg hover:shadow-xl hover:from-slate-900 hover:to-black focus:ring-slate-400 dark:from-slate-700 dark:to-slate-800 dark:hover:from-slate-600 dark:hover:to-slate-700;
+  }
+  .btn-outline {
+    @apply btn border-2 border-slate-300 text-slate-700 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-slate-400 hover:shadow-md focus:ring-slate-300 dark:border-slate-600 dark:text-slate-200 dark:bg-slate-900/50 dark:hover:bg-slate-800/60 dark:hover:border-slate-500;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-slate-700 hover:bg-slate-100/80 hover:shadow-sm focus:ring-slate-300 dark:text-slate-200 dark:hover:bg-slate-900/50 dark:hover:shadow-slate-900/30;
+  }
+
+  /* Modern Toggle Switch */
+  .theme-toggle {
+    @apply relative inline-flex items-center cursor-pointer select-none transition-all duration-200 hover:scale-105;
+  }
+  .theme-toggle input {
+    @apply sr-only;
+  }
+  .theme-toggle-track {
+    @apply w-12 h-6 bg-gray-300 rounded-full transition-all duration-300 ease-in-out shadow-inner dark:bg-slate-700 hover:shadow-md;
+  }
+  .theme-toggle-track.active {
+    @apply bg-gradient-to-r from-teal-400 to-teal-500 shadow-lg ring-2 ring-teal-400/30;
+  }
+  .theme-toggle-thumb {
+    @apply absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out flex items-center justify-center hover:shadow-lg;
+  }
+  .theme-toggle-thumb.active {
+    @apply translate-x-6 bg-white;
+  }
+  .theme-toggle-icon {
+    @apply w-3 h-3 text-gray-600 transition-colors duration-200;
+  }
+  .theme-toggle-thumb.active .theme-toggle-icon {
+    @apply text-teal-600;
+  }
+  .theme-toggle:hover .theme-toggle-track {
+    @apply shadow-lg;
+  }
+  .theme-toggle:hover .theme-toggle-thumb {
+    @apply shadow-lg;
+  }
+
+  /* Notification Toggle Switch */
+  .notification-toggle {
+    @apply relative inline-flex items-center cursor-pointer select-none transition-all duration-200 hover:scale-105;
+  }
+  .notification-toggle input {
+    @apply sr-only;
+  }
+  .notification-toggle-track {
+    @apply w-10 h-5 bg-gray-300 rounded-full transition-all duration-300 ease-in-out shadow-inner dark:bg-slate-700 hover:shadow-md;
+  }
+  .notification-toggle-track.active {
+    @apply bg-gradient-to-r from-blue-400 to-blue-500 shadow-lg ring-2 ring-blue-400/30;
+  }
+  .notification-toggle-thumb {
+    @apply absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out flex items-center justify-center hover:shadow-lg;
+  }
+  .notification-toggle-thumb.active {
+    @apply translate-x-5 bg-white;
+  }
+  .notification-toggle-icon {
+    @apply w-2.5 h-2.5 text-gray-600 transition-colors duration-200;
+  }
+  .notification-toggle-thumb.active .notification-toggle-icon {
+    @apply text-blue-600;
+  }
+  .notification-toggle:hover .notification-toggle-track {
+    @apply shadow-lg;
+  }
+  .notification-toggle:hover .notification-toggle-thumb {
+    @apply shadow-lg;
+  }
+
   .nav-link {
-    @apply flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-teal-600 hover:bg-gray-50 rounded-lg transition-colors duration-200;
+    @apply flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-teal-600 hover:bg-gray-50/80 rounded-xl transition-all duration-200 dark:text-slate-300 dark:hover:text-teal-400 dark:hover:bg-slate-900/40 backdrop-blur-sm;
   }
   .nav-link-active {
-    @apply bg-teal-50 text-teal-700 border-r-2 border-teal-600;
+    @apply bg-gradient-to-r from-teal-50 to-teal-100/50 text-teal-700 border border-teal-200 shadow-sm dark:from-teal-500/10 dark:to-teal-400/5 dark:text-teal-400 dark:border-teal-500/30;
   }
   .sidebar {
-    @apply bg-white border-r border-gray-200 min-h-screen w-64;
+    @apply bg-white/80 border-r border-gray-200/50 min-h-screen w-80 dark:bg-slate-950/60 dark:border-slate-800 backdrop-blur-xl;
   }
   .dashboard-bg {
-    @apply bg-gray-50 min-h-screen;
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen dark:from-slate-950 dark:to-slate-900;
   }
 }

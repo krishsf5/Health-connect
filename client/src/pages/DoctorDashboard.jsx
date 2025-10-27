@@ -8,7 +8,7 @@ const getApiUrl = () => {
     return `${window.location.origin}/api`;
   }
   // For local development
-  return import.meta.env.VITE_API_URL || "http://localhost:5000";
+  return import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 };
 
 const API = getApiUrl();
@@ -17,6 +17,7 @@ const user = () => JSON.parse(localStorage.getItem("user") || "null");
 
 export default function DoctorDashboard() {
   const [appointments, setAppointments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [openNotes, setOpenNotes] = useState({});
   const [noteInputs, setNoteInputs] = useState({});
   const [openCall, setOpenCall] = useState(null);
@@ -40,7 +41,16 @@ export default function DoctorDashboard() {
   // Fetch data and polling
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API}/api/appointments/me`, {
+      // Fetch doctors
+      const doctorsRes = await fetch(`${API}/appointments/doctors`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (doctorsRes.ok) {
+        const doctorsData = await doctorsRes.json();
+        setDoctors(Array.isArray(doctorsData) ? doctorsData : []);
+      }
+
+      const res = await fetch(`${API}/appointments/me`, {
         headers: { Authorization: `Bearer ${token()}` },
       });
       if (res.ok) {
@@ -58,7 +68,7 @@ export default function DoctorDashboard() {
 
     const pollInterval = setInterval(async () => {
       try {
-        const pollRes = await fetch(`${API}/api/appointments/poll?lastUpdate=${encodeURIComponent(lastUpdate)}`, {
+        const pollRes = await fetch(`${API}/appointments/poll?lastUpdate=${encodeURIComponent(lastUpdate)}`, {
           headers: { Authorization: `Bearer ${token()}` },
         });
 
@@ -196,7 +206,7 @@ export default function DoctorDashboard() {
     }
 
     try {
-      const res = await fetch(`${API}/api/appointments/${id}`, {
+      const res = await fetch(`${API}/appointments/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -239,7 +249,7 @@ export default function DoctorDashboard() {
     if (!text) return;
 
     try {
-      const res = await fetch(`${API}/api/appointments/${id}/notes`, {
+      const res = await fetch(`${API}/appointments/${id}/notes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -266,7 +276,7 @@ export default function DoctorDashboard() {
     if (!text) return;
 
     try {
-      const res = await fetch(`${API}/api/appointments/${id}/messages`, {
+      const res = await fetch(`${API}/appointments/${id}/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -292,6 +302,41 @@ export default function DoctorDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
           <p className="text-gray-600 mt-1">Welcome {user()?.name}! Manage your appointments and patient care.</p>
+        </div>
+      </div>
+
+      {/* Doctor Directory */}
+      <div className="card card-hover" data-aos="fade-up">
+        <div className="flex items-center space-x-2 mb-6">
+          <i data-lucide="users" className="w-5 h-5 text-teal-600"></i>
+          <h2 className="text-xl font-semibold text-gray-900">Doctor Directory</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {doctors.map((doctor) => (
+            <div key={doctor._id} className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center">
+                  <i data-lucide="user" className="w-5 h-5 text-teal-600 dark:text-teal-400"></i>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">{doctor.name}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{doctor.specialization || 'General Medicine'}</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{doctor.email}</p>
+              {doctor._id === user()?.id && (
+                <span className="inline-block mt-2 px-2 py-1 text-xs bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 rounded-full">
+                  You
+                </span>
+              )}
+            </div>
+          ))}
+          {doctors.length === 0 && (
+            <div className="col-span-full text-center py-8">
+              <i data-lucide="users" className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3"></i>
+              <p className="text-gray-500 dark:text-gray-400">No doctors found</p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export default function DoctorCreate() {
+export default function DoctorCreate({ onLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,19 +11,34 @@ export default function DoctorCreate() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const navigate = useNavigate();
+
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`${API}/api/auth/register-doctor`, {
+      const res = await fetch(`${API}/auth/register-doctor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, specialization }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");
-      setMessage("Doctor account created successfully.");
+
+      // If registration successful and returns token, log the user in
+      if (data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        if (onLogin) {
+          onLogin(data.user);
+        }
+        // Navigate to doctor dashboard
+        navigate("/doctor");
+        return;
+      }
+
+      setMessage("Doctor account created successfully. Please log in.");
     } catch (err) {
       setMessage(err.message);
     } finally {

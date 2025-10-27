@@ -10,46 +10,87 @@ function signToken(user) {
   );
 }
 
-// Register new patient
+// Register new user (patient or doctor)
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
+    // Check if environment variables are set
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET environment variable is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
+    if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
+      console.error('Database connection string not found in environment variables');
+      return res.status(500).json({ message: 'Database configuration error' });
+    }
+
     await connectToDatabase();
 
-    const { name, email, password } = req.body;
+    const { name, email, password, role = 'patient', specialization, experience } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Validate role
+    if (role && !['patient', 'doctor'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: 'Email already in use' });
+      return res.status(400).json({ message: 'User already exists' });
     }
 
     // Create user
-    const user = await User.create({
+    const user = new User({
       name,
       email,
       password,
-      role: 'patient'
+      role,
+      specialization: role === 'doctor' ? specialization : undefined,
+      experience: role === 'doctor' ? experience : undefined
     });
+
+    await user.save();
 
     const token = signToken(user);
     const userResponse = {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      specialization: user.specialization
     };
 
     res.status(201).json({ token, user: userResponse });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error:', error);
+
+    // If it's a database connection error, provide a more helpful message
+    if (error.message.includes('MONGODB_URI') || error.message.includes('connection')) {
+      return res.status(500).json({
+        message: 'Database connection failed. Please check server configuration.',
+        error: 'Database error'
+      });
+    }
+
+    // If it's a JWT error, provide a helpful message
+    if (error.message.includes('JWT_SECRET')) {
+      return res.status(500).json({
+        message: 'Authentication configuration error. Please check server configuration.',
+        error: 'JWT error'
+      });
+    }
+
+    res.status(500).json({
+      message: 'Server error during registration',
+      error: error.message
+    });
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import Chart from "chart.js/auto";
 import Tesseract from "tesseract.js";
+import Chart from "chart.js/auto";
 
 // Auto-detect API URL for both development and production
 const getApiUrl = () => {
@@ -9,7 +9,7 @@ const getApiUrl = () => {
     return `${window.location.origin}/api`;
   }
   // For local development
-  return import.meta.env.VITE_API_URL || "http://localhost:5000";
+  return import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 };
 
 const API = getApiUrl();
@@ -112,7 +112,7 @@ export default function PatientDashboard() {
   const fetchData = async () => {
     try {
       // Fetch doctors
-      const doctorsRes = await fetch(`${API}/api/appointments/doctors`, {
+      const doctorsRes = await fetch(`${API}/appointments/doctors`, {
         headers: { Authorization: `Bearer ${token()}` },
       });
       if (doctorsRes.ok) {
@@ -121,7 +121,7 @@ export default function PatientDashboard() {
       }
 
       // Fetch appointments
-      const appointmentsRes = await fetch(`${API}/api/appointments/me`, {
+      const appointmentsRes = await fetch(`${API}/appointments/me`, {
         headers: { Authorization: `Bearer ${token()}` },
       });
       if (appointmentsRes.ok) {
@@ -140,7 +140,7 @@ export default function PatientDashboard() {
 
     const pollInterval = setInterval(async () => {
       try {
-        const pollRes = await fetch(`${API}/api/appointments/poll?lastUpdate=${encodeURIComponent(lastUpdate)}`, {
+        const pollRes = await fetch(`${API}/appointments/poll?lastUpdate=${encodeURIComponent(lastUpdate)}`, {
           headers: { Authorization: `Bearer ${token()}` },
         });
 
@@ -256,7 +256,7 @@ export default function PatientDashboard() {
     e.preventDefault();
     setMessage("");
     try {
-      const res = await fetch(`${API}/api/appointments`, {
+      const res = await fetch(`${API}/appointments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

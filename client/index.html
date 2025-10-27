@@ -8,20 +8,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" integrity="sha512-pw5nqfFfQX3b1Uu5n6W6O3l5tqKXk6nYlZ0HcH2dO1JwY0qgk0jvCwD9C2x9i3s8sZ6P8aV2kI6YwP1x0Q96Vg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" integrity="sha512-1cK78a1o+ht2JcaW6g8OXYwqpev9+6GqOkz9xmBN9iUUhIndKtxwILGWYOSibOKjLsEdjyjZvYDq/cZwNeak0w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" integrity="sha512-Gd1ZbJ8Hc8c8s5dJxkR3yQF3G6o4m7pZQyG5QyYk8mFfZ3H4lTnYtT5sZrj3i2Yx7f7b0H2s3k9l8j7k6l5m0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" integrity="sha512-A7AYk1fGKX6S2SsHywmPkrnzTZHrgiVT7GcQkLGDe2ev0aWb8zejytzS8wjo7PGEXKqJOrjQ4oORtnimIRZBtw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
       window.addEventListener('DOMContentLoaded', function() {
-        if (window.AOS) {
-          window.AOS.init({ duration: 600, easing: 'ease-out', once: true });
-        }
         if (window.lucide) {
           window.lucide.createIcons();
+        }
+        // Initialize AOS
+        if (window.AOS) {
+          AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+          });
         }
       });
     </script>

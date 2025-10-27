@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorCreate from "./pages/DoctorCreate";
+import DoctorLogin from "./pages/DoctorLogin";
 import Appointments from "./pages/Appointments";
 import Messages from "./pages/Messages";
 import Reports from "./pages/Reports";
@@ -14,9 +15,29 @@ export default function App() {
     const u = localStorage.getItem("user");
     return u ? JSON.parse(u) : null;
   });
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system");
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Apply theme to html element and watch system preference
+  useEffect(() => {
+    const root = document.documentElement;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const apply = () => {
+      const systemDark = media.matches;
+      const resolved = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
+      root.classList.toggle('dark', resolved === 'dark');
+    };
+
+    apply();
+    localStorage.setItem('theme', theme);
+    if (theme === 'system') {
+      media.addEventListener('change', apply);
+      return () => media.removeEventListener('change', apply);
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (location.pathname === "/doctor/create") return; // allow public doctor creation page
@@ -24,6 +45,7 @@ export default function App() {
     // Define valid routes for each user role
     const validPatientRoutes = ["/patient", "/patient/appointments", "/patient/messages", "/patient/reports", "/patient/settings"];
     const validDoctorRoutes = ["/doctor", "/doctor/appointments", "/doctor/messages", "/doctor/reports", "/doctor/settings"];
+    const publicRoutes = ["/login", "/doctor/login", "/doctor/create"];
 
     if (user) {
       const validRoutes = user.role === "doctor" ? validDoctorRoutes : validPatientRoutes;
@@ -32,9 +54,14 @@ export default function App() {
         navigate(user.role === "doctor" ? "/doctor" : "/patient");
       }
     } else {
-      // Only allow login and doctor creation for non-authenticated users
-      if (location.pathname !== "/login" && location.pathname !== "/doctor/create") {
-        navigate("/login");
+      // Allow public routes (login, doctor login, doctor creation)
+      if (!publicRoutes.includes(location.pathname)) {
+        // Redirect based on the path they tried to access
+        if (location.pathname.startsWith("/doctor")) {
+          navigate("/doctor/login");
+        } else {
+          navigate("/login");
+        }
       }
     }
   }, [user, location.pathname]);
@@ -45,6 +72,12 @@ export default function App() {
     setUser(null);
     navigate("/login");
   };
+
+  const cycleTheme = () => {
+    setTheme((t) => (t === 'light' ? 'dark' : t === 'dark' ? 'system' : 'light'));
+  };
+  const themeIcon = theme === 'system' ? 'Laptop' : theme === 'dark' ? 'Moon' : 'Sun';
+  const themeLabel = theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light';
 
   const navigation = [
     { name: 'Dashboard', href: user?.role === 'doctor' ? '/doctor' : '/patient', icon: 'LayoutDashboard' },
@@ -58,18 +91,42 @@ export default function App() {
     return location.pathname === href;
   };
 
+  const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen dashboard-bg">
       {/* Sidebar */}
       <div className="sidebar flex flex-col">
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+        <div className="flex items-center justify-between h-16 px-3 sm:px-4 border-b border-gray-200 gap-2">
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
+            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <i data-lucide="heart-pulse" className="w-5 h-5 text-white"></i>
             </div>
-            <span className="text-xl font-bold text-gray-900">Health Connect</span>
+            <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap truncate">Health Connect</span>
           </div>
+          <label className="theme-toggle" title={`Theme: ${themeLabel}`}>
+            <input
+              type="checkbox"
+              checked={isDarkMode}
+              readOnly
+              className="sr-only"
+            />
+            <div
+              className={`theme-toggle-track ${isDarkMode ? 'active' : ''}`}
+              onClick={cycleTheme}
+            >
+              <div className={`theme-toggle-thumb ${isDarkMode ? 'active' : ''}`}>
+                <i
+                  data-lucide={themeIcon}
+                  className="theme-toggle-icon w-3 h-3"
+                ></i>
+              </div>
+            </div>
+            <span className="hidden lg:inline ml-2 text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer" onClick={cycleTheme}>
+              {themeLabel}
+            </span>
+          </label>
         </div>
 
         {/* Navigation */}
@@ -94,20 +151,20 @@ export default function App() {
         <div className="p-4 border-t border-gray-200">
           {user ? (
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <i data-lucide="user" className="w-4 h-4 text-gray-600"></i>
+              <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                <i data-lucide="user" className="w-4 h-4 text-gray-600 dark:text-gray-300"></i>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 capitalize">{user.role}</p>
               </div>
             </div>
           ) : (
             <div className="mb-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
-                <i data-lucide="user" className="w-4 h-4 text-gray-500"></i>
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="user" className="w-4 h-4 text-gray-500 dark:text-gray-400"></i>
               </div>
-              <p className="text-xs text-gray-500 text-center">Guest</p>
+              <p className="text-xs text-gray-500 dark:text-gray-300 text-center">Guest</p>
             </div>
           )}
 
@@ -121,9 +178,9 @@ export default function App() {
             </button>
           )}
 
-          {!user && location.pathname !== "/login" && (
+          {!user && location.pathname !== "/login" && location.pathname !== "/doctor/login" && (
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate(location.pathname.startsWith("/doctor") ? "/doctor/login" : "/login")}
               className="w-full btn-primary text-sm"
             >
               <i data-lucide="log-in" className="w-4 h-4 mr-2"></i>
@@ -138,7 +195,8 @@ export default function App() {
         <main className="flex-1 overflow-y-auto p-8">
           <Routes>
             <Route path="/login" element={<Login onLogin={setUser} />} />
-            <Route path="/doctor/create" element={<DoctorCreate />} />
+            <Route path="/doctor/login" element={<DoctorLogin onLogin={setUser} />} />
+            <Route path="/doctor/create" element={<DoctorCreate onLogin={setUser} />} />
             <Route path="/patient" element={<PatientDashboard user={user} />} />
             <Route path="/doctor" element={<DoctorDashboard user={user} />} />
             <Route path="/patient/appointments" element={<Appointments user={user} />} />

@@ -17,6 +17,17 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check if environment variables are set
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET environment variable is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
+    if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
+      console.error('Database connection string not found in environment variables');
+      return res.status(500).json({ message: 'Database configuration error' });
+    }
+
     await connectToDatabase();
 
     const { email, password } = req.body;
@@ -47,6 +58,26 @@ export default async function handler(req, res) {
     res.json({ token, user: userResponse });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+
+    // If it's a database connection error, provide a more helpful message
+    if (error.message.includes('MONGODB_URI') || error.message.includes('connection')) {
+      return res.status(500).json({
+        message: 'Database connection failed. Please check server configuration.',
+        error: 'Database error'
+      });
+    }
+
+    // If it's a JWT error, provide a helpful message
+    if (error.message.includes('JWT_SECRET')) {
+      return res.status(500).json({
+        message: 'Authentication configuration error. Please check server configuration.',
+        error: 'JWT error'
+      });
+    }
+
+    res.status(500).json({
+      message: 'Server error during login',
+      error: error.message
+    });
   }
 }

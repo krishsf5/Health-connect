@@ -1,36 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from "chart.js";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 // Auto-detect API URL for both development and production
 const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
     return `${window.location.origin}/api`;
   }
-  return import.meta.env.VITE_API_URL || "http://localhost:5000";
+  return import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 };
 
 const API = getApiUrl();
@@ -122,19 +98,10 @@ export default function ReportsPage({ user: currentUser }) {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     const appointmentCounts = [2, 1, 3, 2, 1, 4];
 
-    return {
-      labels: months,
-      datasets: [
-        {
-          label: "Appointments",
-          data: appointmentCounts,
-          borderColor: "rgb(20, 184, 166)",
-          backgroundColor: "rgba(20, 184, 166, 0.1)",
-          borderWidth: 2,
-          fill: true,
-        },
-      ],
-    };
+    return months.map((month, index) => ({
+      month,
+      appointments: appointmentCounts[index]
+    }));
   };
 
   const getStatusDistribution = () => {
@@ -146,21 +113,13 @@ export default function ReportsPage({ user: currentUser }) {
       }
     });
 
-    return {
-      labels: Object.keys(statusCounts).map(status => t[status] || status),
-      datasets: [
-        {
-          data: Object.values(statusCounts),
-          backgroundColor: [
-            "rgba(251, 191, 36, 0.8)", // yellow for pending
-            "rgba(34, 197, 94, 0.8)", // green for confirmed
-            "rgba(59, 130, 246, 0.8)", // blue for completed
-            "rgba(239, 68, 68, 0.8)", // red for cancelled
-          ],
-          borderWidth: 0,
-        },
-      ],
-    };
+    return Object.entries(statusCounts).map(([status, count]) => ({
+      name: t[status] || status,
+      value: count,
+      color: status === 'completed' ? '#10B981' :
+             status === 'confirmed' ? '#3B82F6' :
+             status === 'pending' ? '#F59E0B' : '#EF4444'
+    }));
   };
 
   const getHealthScore = () => {
@@ -200,32 +159,6 @@ export default function ReportsPage({ user: currentUser }) {
       </div>
     );
   }
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: t.appointments_over_time,
-      },
-    },
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "bottom",
-      },
-      title: {
-        display: true,
-        text: t.appointment_status,
-      },
-    },
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -291,7 +224,22 @@ export default function ReportsPage({ user: currentUser }) {
             </div>
             <div className="h-64">
               {appointments.length > 0 ? (
-                <Line data={generateChartData()} options={chartOptions} />
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={generateChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="appointments"
+                      stroke="#14B8A6"
+                      strokeWidth={2}
+                      dot={{ fill: '#14B8A6' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <div className="text-center">
@@ -310,7 +258,25 @@ export default function ReportsPage({ user: currentUser }) {
             </h2>
             <div className="h-64">
               {appointments.length > 0 ? (
-                <Doughnut data={getStatusDistribution()} options={doughnutOptions} />
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={getStatusDistribution()}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {getStatusDistribution().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <div className="text-center">

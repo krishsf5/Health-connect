@@ -5,7 +5,7 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
     return `${window.location.origin}/api`;
   }
-  return import.meta.env.VITE_API_URL || "http://localhost:5000";
+  return import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 };
 
 const API = getApiUrl();
