@@ -103,10 +103,17 @@ export default function DoctorLogin({ onLogin }) {
     setError("");
 
     try {
-      const endpoint = mode === 'register' ? 'register' : 'login';
+      // Use dedicated doctor registration endpoint for registration
+      const endpoint = mode === 'register' ? 'register-doctor' : 'login';
       const payload = mode === "register"
-        ? { name, email, password, role: "doctor", specialization, experience: parseInt(experience) }
+        ? { name, email, password, specialization, experience: parseInt(experience) }
         : { email, password };
+
+      console.log('🏥 Doctor Login/Register:', {
+        mode,
+        endpoint: `${API}/auth/${endpoint}`,
+        payload: mode === 'register' ? { name, email, specialization } : { email }
+      });
 
       const res = await fetch(`${API}/auth/${endpoint}`, {
         method: "POST",

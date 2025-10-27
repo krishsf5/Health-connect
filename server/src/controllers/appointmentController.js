@@ -125,6 +125,32 @@ exports.addAppointmentNote = async (req, res) => {
   }
 };
 
+// Get messages for an appointment
+exports.getMessages = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const appt = await Appointment.findById(id)
+      .populate('messages.author', 'name role')
+      .populate('patient', 'name email')
+      .populate('doctor', 'name email');
+    
+    if (!appt) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    
+    // Check user has access to this appointment
+    if (String(appt.patient._id) !== req.user.id && String(appt.doctor._id) !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    res.json(appt.messages || []);
+  } catch (err) {
+    console.error('Get messages error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Send a chat message (doctor or patient) while appointment is active
 exports.sendMessage = async (req, res) => {
   try {
@@ -151,7 +177,8 @@ exports.sendMessage = async (req, res) => {
 
     const updated = await Appointment.findById(id)
       .populate('patient', 'name email')
-      .populate('doctor', 'name email');
+      .populate('doctor', 'name email')
+      .populate('messages.author', 'name role');
 
     req.io.to(`user:${updated.patient._id}`).emit('appointment:update', updated);
     req.io.to(`user:${updated.doctor._id}`).emit('appointment:update', updated);

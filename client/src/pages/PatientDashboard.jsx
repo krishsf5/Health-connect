@@ -33,6 +33,7 @@ export default function PatientDashboard() {
   const [ocrImage, setOcrImage] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date().toISOString());
+  const [openCall, setOpenCall] = useState(null); // For video call modal
 
   const heartChartRef = useRef(null);
 
@@ -117,7 +118,11 @@ export default function PatientDashboard() {
       });
       if (doctorsRes.ok) {
         const doctorsData = await doctorsRes.json();
+        console.log('🩺 Doctors fetched:', doctorsData);
+        console.log('🩺 Number of doctors:', Array.isArray(doctorsData) ? doctorsData.length : 0);
         setDoctors(Array.isArray(doctorsData) ? doctorsData : []);
+      } else {
+        console.error('❌ Failed to fetch doctors:', doctorsRes.status, await doctorsRes.text());
       }
 
       // Fetch appointments
@@ -319,43 +324,60 @@ export default function PatientDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between" data-aos="fade-down">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('patient_dashboard')}</h1>
-          <p className="text-gray-600 mt-1">{t('welcome')}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('patient_dashboard')}</h1>
+          <p className="text-gray-600 dark:text-slate-300 mt-1">Welcome {user()?.name}! Book appointments and manage your health.</p>
         </div>
+
+        {/* Language Selector */}
         <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-600">{t('language')}:</label>
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value)}
-            className="border border-gray-300 px-3 py-2 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+          <button
+            onClick={() => setLang("en")}
+            className={`px-3 py-1 rounded ${
+              lang === "en" ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-slate-200"
+            }`}
           >
-            <option value="en">English</option>
-            <option value="hi">हिन्दी</option>
-            <option value="mr">मराठी</option>
-          </select>
+            EN
+          </button>
+          <button
+            onClick={() => setLang("hi")}
+            className={`px-3 py-1 rounded ${
+              lang === "hi" ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-slate-200"
+            }`}
+          >
+            हिं
+          </button>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Left Column - Main Actions */}
-        <div className="xl:col-span-2 space-y-8">
+      {message && (
+        <div
+          className="p-4 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 rounded-lg"
+          data-aos="fade-down"
+        >
+          {message}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Booking and Upload */}
+        <div className="lg:col-span-2 space-y-8">
           {/* Book Appointment Card */}
           <div className="card card-hover" data-aos="fade-up">
             <div className="flex items-center space-x-2 mb-6">
               <i data-lucide="calendar-plus" className="w-5 h-5 text-teal-600"></i>
-              <h2 className="text-xl font-semibold text-gray-900">{t('book_appointment')}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('book_appointment')}</h2>
             </div>
+
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
                     {t('select_doctor')}
                   </label>
                   <select
                     value={form.doctorId}
                     onChange={(e) => setForm({ ...form, doctorId: e.target.value })}
-                    className="w-full border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                   >
                     <option value="">{t('select_doctor')}</option>
@@ -365,24 +387,30 @@ export default function PatientDashboard() {
                       </option>
                     ))}
                   </select>
+                  {doctors.length === 0 && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">⚠️ No doctors found. Please create a doctor account first.</p>
+                  )}
+                  {doctors.length > 0 && (
+                    <p className="mt-2 text-sm text-green-600 dark:text-green-400">✓ {doctors.length} doctor(s) available</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
                     Appointment Date & Time
                   </label>
                   <input
                     type="datetime-local"
                     value={form.datetime}
                     onChange={(e) => setForm({ ...form, datetime: e.target.value })}
-                    className="w-full border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
                   {t('reason')}
                 </label>
                 <input
@@ -390,14 +418,14 @@ export default function PatientDashboard() {
                   placeholder={t('reason')}
                   value={form.reason}
                   onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                  className="w-full border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
                     {t('age')}
                   </label>
                   <input
@@ -405,7 +433,7 @@ export default function PatientDashboard() {
                     placeholder={t('age')}
                     value={form.age}
                     onChange={(e) => setForm({ ...form, age: e.target.value })}
-                    className="w-full border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                     min="1"
                     max="120"
@@ -413,7 +441,7 @@ export default function PatientDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
                     {t('weight')}
                   </label>
                   <input
@@ -421,7 +449,7 @@ export default function PatientDashboard() {
                     placeholder={t('weight')}
                     value={form.weight}
                     onChange={(e) => setForm({ ...form, weight: e.target.value })}
-                    className="w-full border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                     min="2"
                     max="500"
@@ -429,13 +457,13 @@ export default function PatientDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
                     {t('severity')}
                   </label>
                   <div className="pt-2">
                     {renderStars()}
                     {form.severity > 0 && (
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
                         {t('selected_stars', form.severity)}
                       </p>
                     )}
@@ -454,14 +482,14 @@ export default function PatientDashboard() {
           <div className="card card-hover" data-aos="fade-up" data-aos-delay="100">
             <div className="flex items-center space-x-2 mb-6">
               <i data-lucide="upload" className="w-5 h-5 text-teal-600"></i>
-              <h2 className="text-xl font-semibold text-gray-900">{t('upload_reports')}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('upload_reports')}</h2>
             </div>
 
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 dragActive
-                  ? 'border-teal-400 bg-teal-50'
-                  : 'border-gray-300 hover:border-teal-400 hover:bg-gray-50'
+                  ? 'border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                  : 'border-gray-300 dark:border-slate-600 hover:border-teal-400 hover:bg-gray-50 dark:hover:bg-slate-800'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -469,7 +497,7 @@ export default function PatientDashboard() {
               onDrop={handleDrop}
             >
               <i data-lucide="file-text" className="w-12 h-12 text-gray-400 mb-4"></i>
-              <p className="text-gray-600 mb-2">{t('drag_drop')}</p>
+              <p className="text-gray-600 dark:text-slate-300 mb-2">{t('drag_drop')}</p>
               <label className="btn-primary cursor-pointer">
                 <i data-lucide="folder-open" className="w-4 h-4 mr-2"></i>
                 {t('browse_files')}
@@ -490,7 +518,7 @@ export default function PatientDashboard() {
                   className="w-32 h-32 object-cover rounded-lg border mx-auto mb-4"
                 />
                 <textarea
-                  className="w-full h-40 border border-gray-300 rounded-lg p-3 text-sm bg-gray-50"
+                  className="w-full h-40 border border-gray-300 dark:border-slate-600 rounded-lg p-3 text-sm bg-gray-50 dark:bg-slate-800 dark:text-white"
                   value={ocrText}
                   readOnly
                   placeholder="OCR text will appear here..."
@@ -506,18 +534,18 @@ export default function PatientDashboard() {
           <div className="card card-hover" data-aos="fade-left">
             <div className="flex items-center space-x-2 mb-6">
               <i data-lucide="clock" className="w-5 h-5 text-teal-600"></i>
-              <h2 className="text-xl font-semibold text-gray-900">{t('current_appointments')}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('current_appointments')}</h2>
             </div>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {currentAppointments.map((a) => (
-                <div key={a._id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div key={a._id} className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {a.doctor?.name || "Doctor"}
                       </p>
-                      <p className="text-sm text-gray-600">{a.reason}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-300">{a.reason}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">
                         Severity: {"●".repeat(a.severity || 0)}
                       </p>
                     </div>
@@ -528,10 +556,35 @@ export default function PatientDashboard() {
                   <p className="text-sm text-teal-600 font-medium">
                     {new Date(a.datetime).toLocaleString()}
                   </p>
+                  
+                  {/* Video Call Button */}
+                  {a.meetingLink && (
+                    <div className="mt-3">
+                      {String(a.meetingLink).startsWith('jitsi:') ? (
+                        <button
+                          onClick={() => setOpenCall(a._id)}
+                          className="w-full btn-primary text-sm flex items-center justify-center"
+                        >
+                          <i data-lucide="video" className="w-4 h-4 mr-2"></i>
+                          Join Video Call
+                        </button>
+                      ) : (
+                        <a
+                          href={a.meetingLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full btn-primary text-sm flex items-center justify-center"
+                        >
+                          <i data-lucide="external-link" className="w-4 h-4 mr-2"></i>
+                          Join Meeting
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               {currentAppointments.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-8">{t('no_current')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-8">{t('no_current')}</p>
               )}
             </div>
           </div>
@@ -540,29 +593,29 @@ export default function PatientDashboard() {
           <div className="card card-hover" data-aos="fade-left" data-aos-delay="100">
             <div className="flex items-center space-x-2 mb-6">
               <i data-lucide="history" className="w-5 h-5 text-teal-600"></i>
-              <h2 className="text-xl font-semibold text-gray-900">{t('history')}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('history')}</h2>
             </div>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {historyAppointments.map((a) => (
-                <div key={a._id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div key={a._id} className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {a.doctor?.name || "Doctor"}
                       </p>
-                      <p className="text-sm text-gray-600">{a.reason}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">{a.reason}</p>
                     </div>
-                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full capitalize">
+                    <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-full capitalize">
                       {a.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
                     {new Date(a.datetime).toLocaleString()}
                   </p>
                 </div>
               ))}
               {historyAppointments.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-8">{t('no_history')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-8">{t('no_history')}</p>
               )}
             </div>
           </div>
@@ -571,12 +624,63 @@ export default function PatientDashboard() {
           <div className="card card-hover" data-aos="fade-left" data-aos-delay="200">
             <div className="flex items-center space-x-2 mb-6">
               <i data-lucide="heart" className="w-5 h-5 text-teal-600"></i>
-              <h2 className="text-xl font-semibold text-gray-900">{t('heart_rate')}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('heart_rate')}</h2>
             </div>
             <canvas ref={heartChartRef} height="200"></canvas>
           </div>
         </div>
       </div>
+
+      {/* Video Call Modal */}
+      {openCall && (() => {
+        const appt = appointments.find(x => x._id === openCall);
+        if (!appt || !appt.meetingLink || !String(appt.meetingLink).startsWith('jitsi:')) return null;
+        const room = String(appt.meetingLink).replace('jitsi:', '');
+        return (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setOpenCall(null)}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-5xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
+                    <i data-lucide="video" className="w-5 h-5 text-white"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Video Call with Dr. {appt.doctor?.name || "Doctor"}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">{appt.reason}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOpenCall(null)}
+                  className="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
+                >
+                  <i data-lucide="x" className="w-5 h-5 text-gray-600 dark:text-slate-400"></i>
+                </button>
+              </div>
+              
+              {/* Jitsi iframe */}
+              <div className="flex-1 overflow-hidden">
+                <iframe
+                  src={`https://meet.jit.si/${room}`}
+                  allow="camera; microphone; fullscreen; display-capture"
+                  className="w-full h-full border-0"
+                  title="Video Call"
+                />
+              </div>
+              
+              {/* Footer */}
+              <div className="p-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+                <p className="text-sm text-gray-600 dark:text-slate-400 text-center">
+                  <i data-lucide="info" className="w-4 h-4 inline mr-1"></i>
+                  The call will be ended when you close this window
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Success/Error Messages */}
       {message && (

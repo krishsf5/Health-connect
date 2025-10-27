@@ -534,86 +534,102 @@ export default function DoctorDashboard() {
                 {appointments
                   .filter(a => a.status === "accepted")
                   .map(a => (
-                    <div key={a._id} className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-                      <p className="font-medium">{a.patient?.name}</p>
-                      <p className="text-sm text-gray-600">{a.reason}</p>
-                      <p className="text-sm text-gray-600">Age: {a.age} | Weight: {a.weight} kg</p>
-                      <p className="text-sm text-gray-600">Severity: {renderSeverity(a.severity || 0)}</p>
-                      <p className="text-sm text-green-600">{new Date(a.datetime).toLocaleString()}</p>
+                    <div key={a._id} className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500 dark:border-green-600 shadow-sm">
+                      <p className="font-medium text-gray-900 dark:text-white">{a.patient?.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">{a.reason}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-400">Age: {a.age} | Weight: {a.weight} kg</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-400">Severity: {renderSeverity(a.severity || 0)}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400 font-medium">{new Date(a.datetime).toLocaleString()}</p>
 
-                      {a.meetingLink && (
-                        <div className="flex items-center space-x-2 mt-1">
-                          {String(a.meetingLink).startsWith('jitsi:') ? (
-                            <button
-                              onClick={() => setOpenCall(a._id)}
-                              className="text-xs px-2 py-1 rounded bg-teal-600 text-white hover:bg-teal-700"
-                            >
-                              Open Call
-                            </button>
-                          ) : (
-                            <a
-                              href={a.meetingLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-teal-600 hover:underline text-sm"
-                            >
-                              Join Meeting
-                            </a>
-                          )}
-                          <button
-                            onClick={() => setOpenChat(a._id)}
-                            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition ${
-                              openChat === a._id
-                                ? 'border-teal-600 bg-teal-600 text-white'
-                                : 'border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100'
-                            }`}
-                          >
-                            <i data-lucide="message-circle" className="w-3 h-3"></i>
-                            {openChat === a._id ? 'Chat Open' : 'Chat'}
-                          </button>
-                          <button
-                            onClick={() => updateStatus(a._id, "completed")}
-                            className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
-                          >
-                            Done
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="mt-3">
+                      {/* Action Buttons */}
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {a.meetingLink && (
+                          <>
+                            {String(a.meetingLink).startsWith('jitsi:') ? (
+                              <button
+                                onClick={() => setOpenCall(a._id)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
+                              >
+                                <i data-lucide="video" className="w-3.5 h-3.5"></i>
+                                Open Call
+                              </button>
+                            ) : (
+                              <a
+                                href={a.meetingLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
+                              >
+                                <i data-lucide="external-link" className="w-3.5 h-3.5"></i>
+                                Join Meeting
+                              </a>
+                            )}
+                          </>
+                        )}
+                        
+                        <button
+                          onClick={() => setOpenChat(a._id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm ${
+                            openChat === a._id
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                              : 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800'
+                          }`}
+                        >
+                          <i data-lucide="message-circle" className="w-3.5 h-3.5"></i>
+                          {openChat === a._id ? 'Chat Open' : 'Chat'}
+                        </button>
+                        
+                        <button
+                          onClick={() => updateStatus(a._id, "completed")}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 border border-green-200 dark:border-green-800 transition-colors shadow-sm"
+                        >
+                          <i data-lucide="check-circle" className="w-3.5 h-3.5"></i>
+                          Mark Done
+                        </button>
+                        
                         <button
                           onClick={() => toggleNotes(a._id)}
-                          className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 transition-colors shadow-sm"
                         >
+                          <i data-lucide={openNotes[a._id] ? "chevron-up" : "file-text"} className="w-3.5 h-3.5"></i>
                           {openNotes[a._id] ? 'Hide Notes' : 'Show Notes'}
                         </button>
-                        {openNotes[a._id] && (
-                          <div className="mt-2">
-                            <div className="space-y-2 max-h-32 overflow-y-auto">
-                              {(a.notes || []).map((n, idx) => (
-                                <div key={idx} className="text-sm text-gray-700">
-                                  <span className="font-medium">Note:</span> {n.text}
-                                  <span className="ml-2 text-xs text-gray-500">
-                                    {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
-                                  </span>
-                                </div>
-                              ))}
-                              {(!a.notes || a.notes.length === 0) && (
-                                <p className="text-sm text-gray-500">No notes yet.</p>
-                              )}
-                            </div>
-                            <div className="mt-2 flex space-x-2">
-                              <input
-                                value={noteInputs[a._id] || ""}
-                                onChange={(e) => setNoteInputs(prev => ({ ...prev, [a._id]: e.target.value }))}
-                                placeholder="Add a note"
-                                className="flex-1 border px-2 py-1 rounded text-sm"
-                              />
-                              <button onClick={() => addNote(a._id)} className="btn-primary px-3 py-1 text-sm">Add</button>
-                            </div>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Notes Section */}
+                      {openNotes[a._id] && (
+                        <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700">
+                          <div className="space-y-2 max-h-32 overflow-y-auto mb-3">
+                            {(a.notes || []).map((n, idx) => (
+                              <div key={idx} className="p-2 bg-gray-50 dark:bg-slate-800 rounded text-sm">
+                                <span className="font-medium text-gray-900 dark:text-white">Note:</span>
+                                <span className="ml-2 text-gray-700 dark:text-slate-300">{n.text}</span>
+                                <div className="mt-1 text-xs text-gray-500 dark:text-slate-500">
+                                  {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                                </div>
+                              </div>
+                            ))}
+                            {(!a.notes || a.notes.length === 0) && (
+                              <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-2">No notes yet.</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              value={noteInputs[a._id] || ""}
+                              onChange={(e) => setNoteInputs(prev => ({ ...prev, [a._id]: e.target.value }))}
+                              placeholder="Add a note..."
+                              className="flex-1 border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                            <button 
+                              onClick={() => addNote(a._id)} 
+                              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
+                            >
+                              <i data-lucide="plus" className="w-4 h-4"></i>
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
               </div>

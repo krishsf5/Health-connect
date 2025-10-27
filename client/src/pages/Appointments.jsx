@@ -10,82 +10,24 @@ const getApiUrl = () => {
 
 const API = getApiUrl();
 const token = () => localStorage.getItem("token");
-const user = () => JSON.parse(localStorage.getItem("user") || "null");
+const getUser = () => JSON.parse(localStorage.getItem("user") || "null");
 
 export default function AppointmentsPage({ user: currentUser }) {
   const [appointments, setAppointments] = useState([]);
-  const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
+  const [filter, setFilter] = useState("all");
+  const [openCall, setOpenCall] = useState(null);
+  const user = getUser();
 
-  const i18n = {
-    en: {
-      appointments: "Appointments",
-      my_appointments: "My Appointments",
-      upcoming: "Upcoming Appointments",
-      past: "Past Appointments",
-      doctor: "Doctor",
-      date: "Date & Time",
-      reason: "Reason",
-      status: "Status",
-      no_appointments: "No appointments found",
-      loading: "Loading...",
-      pending: "Pending",
-      confirmed: "Confirmed",
-      completed: "Completed",
-      cancelled: "Cancelled"
-    },
-    hi: {
-      appointments: "अपॉइंटमेंट्स",
-      my_appointments: "मेरे अपॉइंटमेंट्स",
-      upcoming: "आगामी अपॉइंटमेंट्स",
-      past: "पिछले अपॉइंटमेंट्स",
-      doctor: "डॉक्टर",
-      date: "दिनांक और समय",
-      reason: "विजिट का कारण",
-      status: "स्थिति",
-      no_appointments: "कोई अपॉइंटमेंट नहीं मिला",
-      loading: "लोड हो रहा है...",
-      pending: "लंबित",
-      confirmed: "पुष्टि की गई",
-      completed: "पूर्ण",
-      cancelled: "रद्द"
-    },
-    mr: {
-      appointments: "अपॉइंटमेंट्स",
-      my_appointments: "माझ्या अपॉइंटमेंट्स",
-      upcoming: "आगामी अपॉइंटमेंट्स",
-      past: "मागील अपॉइंटमेंट्स",
-      doctor: "डॉक्टर",
-      date: "दिनांक आणि वेळ",
-      reason: "भेटीचे कारण",
-      status: "स्थिती",
-      no_appointments: "कोणतेही अपॉइंटमेंट सापडले नाहीत",
-      loading: "लोड होत आहे...",
-      pending: "प्रलंबित",
-      confirmed: "पुष्टी केली",
-      completed: "पूर्ण",
-      cancelled: "रद्द केले"
-    }
-  };
-
-  const t = i18n[lang] || i18n.en;
-
-  useEffect(() => {
-    fetchAppointments();
-    fetchDoctors();
-  }, []);
-
+  // Fetch appointments
   const fetchAppointments = async () => {
     try {
       const response = await fetch(`${API}/appointments/me`, {
-        headers: {
-          Authorization: `Bearer ${token()}`,
-        },
+        headers: { Authorization: `Bearer ${token()}` },
       });
       if (response.ok) {
         const data = await response.json();
-        setAppointments(data.appointments || []);
+        setAppointments(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -93,50 +35,78 @@ export default function AppointmentsPage({ user: currentUser }) {
     setLoading(false);
   };
 
-  const fetchDoctors = async () => {
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // Cancel appointment (patient only)
+  const cancelAppointment = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+    
     try {
-      const response = await fetch(`${API}/appointments/doctors`);
+      const response = await fetch(`${API}/appointments/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token()}`,
+        },
+        body: JSON.stringify({ status: 'declined' }),
+      });
       if (response.ok) {
-        const data = await response.json();
-        setDoctors(data.doctors || []);
+        fetchAppointments();
       }
     } catch (error) {
-      console.error("Error fetching doctors:", error);
+      console.error("Error cancelling appointment:", error);
     }
   };
 
-  const getDoctorName = (doctorId) => {
-    const doctor = doctors.find(d => d._id === doctorId);
-    return doctor ? doctor.name : "Unknown Doctor";
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "confirmed": return "bg-green-100 text-green-800";
-      case "completed": return "bg-blue-100 text-blue-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+  // Filter appointments
+  const filterAppointments = () => {
+    const now = new Date();
+    
+    switch(filter) {
+      case 'upcoming':
+        return appointments.filter(a => 
+          new Date(a.datetime) > now && 
+          (a.status === 'pending' || a.status === 'accepted')
+        );
+      case 'past':
+        return appointments.filter(a => 
+          new Date(a.datetime) < now || 
+          a.status === 'completed' || 
+          a.status === 'declined'
+        );
+      case 'pending':
+        return appointments.filter(a => a.status === 'pending');
+      case 'accepted':
+        return appointments.filter(a => a.status === 'accepted');
+      case 'completed':
+        return appointments.filter(a => a.status === 'completed');
+      default:
+        return appointments;
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString(lang, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const filtered = filterAppointments();
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      pending: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
+      accepted: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
+      completed: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+      declined: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
+      rescheduled: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
+    };
+    return styles[status] || styles.pending;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen dashboard-bg p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="card p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">{t.loading}</p>
+            <p className="mt-4 text-gray-600 dark:text-slate-400">Loading...</p>
           </div>
         </div>
       </div>
@@ -144,75 +114,189 @@ export default function AppointmentsPage({ user: currentUser }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen dashboard-bg p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.appointments}</h1>
-          <p className="text-gray-600">{t.my_appointments}</p>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Appointments
+          </h1>
+          <p className="text-gray-600 dark:text-slate-400">
+            Manage your appointments and consultations
+          </p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {['all', 'upcoming', 'past', 'pending', 'accepted', 'completed'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === f
+                  ? 'bg-teal-600 text-white shadow-md'
+                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'
+              }`}
+            >
+              <span className="capitalize">{f}</span>
+            </button>
+          ))}
         </div>
 
         {/* Appointments List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">{t.upcoming}</h2>
-          </div>
-
-          {appointments.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="calendar" className="w-8 h-8 text-gray-400"></i>
+        <div className="space-y-4">
+          {filtered.length === 0 ? (
+            <div className="card p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="calendar-x" className="w-8 h-8 text-gray-400"></i>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t.no_appointments}</h3>
-              <p className="text-gray-600">Book your first appointment to get started</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No appointments found
+              </h3>
+              <p className="text-gray-600 dark:text-slate-400">
+                {filter === 'all' ? 'Book your first appointment to get started' : `No ${filter} appointments`}
+              </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
-              {appointments.map((appointment) => (
-                <div key={appointment._id} className="p-6 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {getDoctorName(appointment.doctorId)}
-                        </h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
-                          {t[appointment.status] || appointment.status}
-                        </span>
+            filtered.map((appointment) => (
+              <div key={appointment._id} className="card p-6">
+                {/* Appointment Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center">
+                        <i data-lucide="user" className="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <i data-lucide="calendar" className="w-4 h-4 mr-2"></i>
-                          {formatDate(appointment.datetime)}
-                        </div>
-                        <div className="flex items-center">
-                          <i data-lucide="user" className="w-4 h-4 mr-2"></i>
-                          {t.reason}: {appointment.reason}
-                        </div>
-                        <div className="flex items-center">
-                          <i data-lucide="activity" className="w-4 h-4 mr-2"></i>
-                          Age: {appointment.age} | Weight: {appointment.weight}kg
-                        </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {user?.role === 'doctor' 
+                            ? appointment.patient?.name || 'Patient'
+                            : appointment.doctor?.name || 'Doctor'}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
+                          {user?.role === 'doctor' && appointment.patient?.email}
+                          {user?.role === 'patient' && appointment.doctor?.specialization}
+                        </p>
                       </div>
                     </div>
                   </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>
+                    {appointment.status}
+                  </span>
                 </div>
-              ))}
-            </div>
+
+                {/* Appointment Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
+                    <i data-lucide="calendar" className="w-4 h-4 mr-2 text-teal-600"></i>
+                    {new Date(appointment.datetime).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
+                    <i data-lucide="clock" className="w-4 h-4 mr-2 text-teal-600"></i>
+                    {new Date(appointment.datetime).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
+                    <i data-lucide="file-text" className="w-4 h-4 mr-2 text-teal-600"></i>
+                    Reason: {appointment.reason}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
+                    <i data-lucide="activity" className="w-4 h-4 mr-2 text-teal-600"></i>
+                    Age: {appointment.age} | Weight: {appointment.weight}kg
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {/* Patient Actions */}
+                  {user?.role === 'patient' && (
+                    <>
+                      {(appointment.status === 'pending' || appointment.status === 'accepted') && (
+                        <button
+                          onClick={() => cancelAppointment(appointment._id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 transition-colors"
+                        >
+                          <i data-lucide="x-circle" className="w-3.5 h-3.5"></i>
+                          Cancel
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Video Call Button */}
+                  {appointment.meetingLink && appointment.status === 'accepted' && (
+                    <button
+                      onClick={() => setOpenCall(appointment._id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
+                    >
+                      <i data-lucide="video" className="w-3.5 h-3.5"></i>
+                      Join Call
+                    </button>
+                  )}
+
+                  {/* View Details */}
+                  <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 transition-colors">
+                    <i data-lucide="info" className="w-3.5 h-3.5"></i>
+                    Details
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
-
-        {/* Past Appointments */}
-        <div className="bg-white rounded-lg shadow mt-8">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">{t.past}</h2>
-          </div>
-          <div className="p-8 text-center text-gray-500">
-            <i data-lucide="clock" className="w-12 h-12 mx-auto mb-4"></i>
-            <p>Past appointments will appear here</p>
-          </div>
-        </div>
       </div>
+
+      {/* Video Call Modal */}
+      {openCall && (() => {
+        const appt = appointments.find(x => x._id === openCall);
+        if (!appt || !appt.meetingLink) return null;
+        const room = String(appt.meetingLink).replace('jitsi:', '');
+        return (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setOpenCall(null)}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-5xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
+                    <i data-lucide="video" className="w-5 h-5 text-white"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Video Consultation
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">
+                      {user?.role === 'doctor' ? appt.patient?.name : appt.doctor?.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOpenCall(null)}
+                  className="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
+                >
+                  <i data-lucide="x" className="w-5 h-5 text-gray-600 dark:text-slate-400"></i>
+                </button>
+              </div>
+              
+              {/* Jitsi iframe */}
+              <div className="flex-1 overflow-hidden">
+                <iframe
+                  src={`https://meet.jit.si/${room}`}
+                  allow="camera; microphone; fullscreen; display-capture"
+                  className="w-full h-full border-0"
+                  title="Video Call"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

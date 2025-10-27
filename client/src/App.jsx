@@ -4,17 +4,34 @@ import Login from "./pages/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorCreate from "./pages/DoctorCreate";
-import DoctorLogin from "./pages/DoctorLogin";
 import Appointments from "./pages/Appointments";
 import Messages from "./pages/Messages";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
 export default function App() {
-  const [user, setUser] = useState(() => {
+  const [user, setUserState] = useState(() => {
     const u = localStorage.getItem("user");
-    return u ? JSON.parse(u) : null;
+    const parsedUser = u ? JSON.parse(u) : null;
+    console.log('🔐 App initialized with user:', parsedUser);
+    if (parsedUser) {
+      console.log('👤 User role:', parsedUser.role);
+    }
+    return parsedUser;
   });
+  
+  // Wrapper to log user changes
+  const setUser = (newUser) => {
+    console.log('🔄 setUser called with:', newUser);
+    if (newUser) {
+      console.log('  ├─ Name:', newUser.name);
+      console.log('  ├─ Email:', newUser.email);
+      console.log('  ├─ Role:', newUser.role);
+      console.log('  └─ Specialization:', newUser.specialization);
+    }
+    setUserState(newUser);
+  };
+  
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system");
 
   const navigate = useNavigate();
@@ -40,28 +57,41 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    if (location.pathname === "/doctor/create") return; // allow public doctor creation page
+    console.log('🚦 Route check:', {
+      pathname: location.pathname,
+      userRole: user?.role,
+      userName: user?.name
+    });
+
+    // Allow both /doctor/create and /doctor-create for doctor registration
+    if (location.pathname === "/doctor/create" || location.pathname === "/doctor-create") return;
 
     // Define valid routes for each user role
     const validPatientRoutes = ["/patient", "/patient/appointments", "/patient/messages", "/patient/reports", "/patient/settings"];
     const validDoctorRoutes = ["/doctor", "/doctor/appointments", "/doctor/messages", "/doctor/reports", "/doctor/settings"];
-    const publicRoutes = ["/login", "/doctor/login", "/doctor/create"];
+    const publicRoutes = ["/login", "/doctor/create", "/doctor-create"];
 
     if (user) {
       const validRoutes = user.role === "doctor" ? validDoctorRoutes : validPatientRoutes;
+      console.log('✅ User logged in:', user.role);
+      console.log('📍 Valid routes for', user.role + ':', validRoutes);
+      console.log('🔍 Current path:', location.pathname);
+      
       if (!validRoutes.includes(location.pathname)) {
+        const redirectTo = user.role === "doctor" ? "/doctor" : "/patient";
+        console.log('🔀 Redirecting to:', redirectTo);
         // Redirect to appropriate dashboard if on invalid route
-        navigate(user.role === "doctor" ? "/doctor" : "/patient");
+        navigate(redirectTo);
+      } else {
+        console.log('✓ Path is valid for user role');
       }
     } else {
-      // Allow public routes (login, doctor login, doctor creation)
+      console.log('❌ No user logged in');
+      // Allow public routes (login, doctor creation)
       if (!publicRoutes.includes(location.pathname)) {
-        // Redirect based on the path they tried to access
-        if (location.pathname.startsWith("/doctor")) {
-          navigate("/doctor/login");
-        } else {
-          navigate("/login");
-        }
+        console.log('🔀 Redirecting to login');
+        // Everyone uses the same /login page - it routes based on role automatically
+        navigate("/login");
       }
     }
   }, [user, location.pathname]);
@@ -178,9 +208,9 @@ export default function App() {
             </button>
           )}
 
-          {!user && location.pathname !== "/login" && location.pathname !== "/doctor/login" && (
+          {!user && location.pathname !== "/login" && (
             <button
-              onClick={() => navigate(location.pathname.startsWith("/doctor") ? "/doctor/login" : "/login")}
+              onClick={() => navigate("/login")}
               className="w-full btn-primary text-sm"
             >
               <i data-lucide="log-in" className="w-4 h-4 mr-2"></i>
@@ -195,8 +225,8 @@ export default function App() {
         <main className="flex-1 overflow-y-auto p-8">
           <Routes>
             <Route path="/login" element={<Login onLogin={setUser} />} />
-            <Route path="/doctor/login" element={<DoctorLogin onLogin={setUser} />} />
             <Route path="/doctor/create" element={<DoctorCreate onLogin={setUser} />} />
+            <Route path="/doctor-create" element={<DoctorCreate onLogin={setUser} />} />
             <Route path="/patient" element={<PatientDashboard user={user} />} />
             <Route path="/doctor" element={<DoctorDashboard user={user} />} />
             <Route path="/patient/appointments" element={<Appointments user={user} />} />
