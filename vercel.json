@@ -1,55 +1,11 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/auth/register",
-      "dest": "/api/auth/register.js"
-    },
-    {
-      "src": "/api/auth/login",
-      "dest": "/api/auth/login.js"
-    },
-    {
-      "src": "/api/auth/me",
-      "dest": "/api/auth/me.js"
-    },
-    {
-      "src": "/api/appointments/doctors",
-      "dest": "/api/appointments/doctors.js"
-    },
-    {
-      "src": "/api/appointments/me",
-      "dest": "/api/appointments/me.js"
-    },
-    {
-      "src": "/api/appointments/poll",
-      "dest": "/api/appointments/poll.js"
-    },
-    {
-      "src": "/api/appointments",
-      "methods": ["POST"],
-      "dest": "/api/appointments/index.js"
-    },
-    {
-      "src": "/api/appointments/(.*)",
-      "dest": "/api/appointments/$1.js"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
