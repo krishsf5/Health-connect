@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 exports.listDoctors = async (req, res) => {
   try {
@@ -171,14 +172,42 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ message: 'Chat closed for this appointment' });
     }
 
+    const trimmed = text.trim();
     appt.messages = appt.messages || [];
-    appt.messages.push({ author: req.user.id, text: text.trim() });
+    appt.messages.push({ author: req.user.id, text: trimmed });
     await appt.save();
 
     const updated = await Appointment.findById(id)
       .populate('patient', 'name email')
       .populate('doctor', 'name email')
       .populate('messages.author', 'name role');
+
+    const senderId = req.user.id;
+    const senderRole = req.user.role;
+    const patientId = updated.patient?._id?.toString();
+    const doctorId = updated.doctor?._id?.toString();
+    const recipientId = senderId === doctorId ? patientId : doctorId;
+
+    if (recipientId) {
+      try {
+        const senderName = senderId === doctorId ? updated.doctor?.name : updated.patient?.name;
+        const notification = await Notification.create({
+          user: recipientId,
+          type: 'message',
+          title: `New message from ${senderName || 'your contact'}`,
+          body: trimmed,
+          data: {
+            appointmentId: updated._id,
+            senderId,
+            senderRole,
+          },
+        });
+
+        req.io.to(`user:${recipientId}`).emit('notification:new', notification);
+      } catch (notificationErr) {
+        console.error('Notification creation error:', notificationErr);
+      }
+    }
 
     req.io.to(`user:${updated.patient._id}`).emit('appointment:update', updated);
     req.io.to(`user:${updated.doctor._id}`).emit('appointment:update', updated);

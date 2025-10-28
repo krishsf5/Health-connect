@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import Tesseract from "tesseract.js";
 import Chart from "chart.js/auto";
 
@@ -19,7 +20,7 @@ const user = () => JSON.parse(localStorage.getItem("user") || "null");
 export default function PatientDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [appointments, setAppointments] = useState([]);
-  const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
+  const { lang, setLang } = useLanguage();
   const [form, setForm] = useState({
     doctorId: "",
     reason: "",
@@ -58,6 +59,10 @@ export default function PatientDashboard() {
       language: "Language",
       drag_drop: "Drag and drop your reports here, or click to select",
       browse_files: "Browse Files",
+      notifications: "Notifications",
+      no_notifications: "No notifications",
+      mark_all_read: "Mark all read",
+      view_messages: "View conversation",
     },
     hi: {
       patient_dashboard: "रोगी डैशबोर्ड",
@@ -79,6 +84,10 @@ export default function PatientDashboard() {
       language: "भाषा",
       drag_drop: "अपनी रिपोर्ट्स को यहां ड्रैग और ड्रॉप करें, या चुनने के लिए क्लिक करें",
       browse_files: "फ़ाइलें ब्राउज़ करें",
+      notifications: "सूचनाएं",
+      no_notifications: "कोई सूचना नहीं",
+      mark_all_read: "सभी पढ़ा चिह्नित करें",
+      view_messages: "संदेश देखें",
     },
     mr: {
       patient_dashboard: "रुग्ण डॅशबोर्ड",
@@ -100,6 +109,10 @@ export default function PatientDashboard() {
       language: "भाषा",
       drag_drop: "तुमच्या रिपोर्ट्सला येथे ड्रॅग आणि ड्रॉप करा, किंवा निवडण्यासाठी क्लिक करा",
       browse_files: "फायली ब्राउझ करा",
+      notifications: "सूचना",
+      no_notifications: "कोणत्याही सूचना नाहीत",
+      mark_all_read: "सर्व वाचले म्हणून चिन्हांकित करा",
+      view_messages: "चॅट पहा",
     },
   };
 
@@ -557,8 +570,8 @@ export default function PatientDashboard() {
                     {new Date(a.datetime).toLocaleString()}
                   </p>
                   
-                  {/* Video Call Button */}
-                  {a.meetingLink && (
+                  {/* Video Call Button - Only show for accepted appointments */}
+                  {a.meetingLink && a.status === 'accepted' && (
                     <div className="mt-3">
                       {String(a.meetingLink).startsWith('jitsi:') ? (
                         <button

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Auto-detect API URL for both development and production
 const getApiUrl = () => {
@@ -13,6 +14,7 @@ const token = () => localStorage.getItem("token");
 const getUser = () => JSON.parse(localStorage.getItem("user") || "null");
 
 export default function AppointmentsPage({ user: currentUser }) {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -221,7 +223,7 @@ export default function AppointmentsPage({ user: currentUser }) {
                       {(appointment.status === 'pending' || appointment.status === 'accepted') && (
                         <button
                           onClick={() => cancelAppointment(appointment._id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 transition-colors"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 transition-colors"
                         >
                           <i data-lucide="x-circle" className="w-3.5 h-3.5"></i>
                           Cancel
@@ -230,19 +232,32 @@ export default function AppointmentsPage({ user: currentUser }) {
                     </>
                   )}
 
-                  {/* Video Call Button */}
-                  {appointment.meetingLink && appointment.status === 'accepted' && (
+                  {/* Video Call Button - Only show for accepted appointments, not completed or declined */}
+                  {appointment.meetingLink && 
+                   appointment.status === 'accepted' && 
+                   new Date(appointment.datetime) <= new Date() && (
                     <button
                       onClick={() => setOpenCall(appointment._id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
                     >
                       <i data-lucide="video" className="w-3.5 h-3.5"></i>
                       Join Call
                     </button>
                   )}
 
+                  {/* Messages Button */}
+                  {appointment.status === 'accepted' && (
+                    <button 
+                      onClick={() => navigate(`/${user?.role}/messages?appointmentId=${appointment._id}`)}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 transition-colors"
+                    >
+                      <i data-lucide="message-circle" className="w-3.5 h-3.5"></i>
+                      Messages
+                    </button>
+                  )}
+
                   {/* View Details */}
-                  <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 transition-colors">
+                  <button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 transition-colors">
                     <i data-lucide="info" className="w-3.5 h-3.5"></i>
                     Details
                   </button>

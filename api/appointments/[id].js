@@ -2,14 +2,14 @@ const { authRequired, requireRole } = require('../_middleware/auth');
 const connectToDatabase = require('../_db');
 const Appointment = require('../_models/Appointment');
 
-// Update appointment status (doctor only)
+// Update appointment status
 export default async function handler(req, res) {
   if (req.method !== 'PATCH') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const decoded = await requireRole('doctor')(req);
+    const decoded = await authRequired(req);
     await connectToDatabase();
 
     const { id } = req.query;
@@ -25,11 +25,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    // Find appointment and verify doctor is assigned
-    const appointment = await Appointment.findOne({
-      _id: id,
-      doctor: decoded.user.id
-    });
+    // Find appointment
+    let appointment;
+    
+    if (decoded.user.role === 'doctor') {
+      // Doctors can update appointments assigned to them
+      appointment = await Appointment.findOne({
+        _id: id,
+        doctor: decoded.user.id
+      });
+      
+      // Doctors can set any status
+    } else if (decoded.user.role === 'patient') {
+      // Patients can only cancel (decline) their own appointments
+      if (status !== 'declined') {
+        return res.status(403).json({ message: 'Patients can only cancel appointments' });
+      }
+      
+      appointment = await Appointment.findOne({
+        _id: id,
+        patient: decoded.user.id
+      });
+    } else {
+      return res.status(403).json({ message: 'Access denied' });
+    }
 
     if (!appointment) {
       return res.status(404).json({ message: 'Appointment not found' });
@@ -38,12 +57,15 @@ export default async function handler(req, res) {
     // Update appointment
     appointment.status = status;
 
-    if (status === 'accepted' && meetingLink) {
-      appointment.meetingLink = meetingLink;
-    }
+    // Only doctors can set meeting links
+    if (decoded.user.role === 'doctor') {
+      if (status === 'accepted' && meetingLink) {
+        appointment.meetingLink = meetingLink;
+      }
 
-    if (status === 'rescheduled' && meetingLink) {
-      appointment.meetingLink = meetingLink;
+      if (status === 'rescheduled' && meetingLink) {
+        appointment.meetingLink = meetingLink;
+      }
     }
 
     await appointment.save();

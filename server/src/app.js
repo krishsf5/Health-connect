@@ -6,11 +6,15 @@ const connectToDatabase = require('./config/db');
 
 const authRoutes = require('./routes/authRoutes');
 const apptRoutes = require('./routes/appointmentRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const patientNoteRoutes = require('./routes/patientNoteRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
-// Middleware
-app.use(express.json());
+// Middleware - Increase body size limit for file uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const corsOrigin = process.env.CLIENT_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin }));
@@ -43,6 +47,9 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', apptRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/patient-notes', patientNoteRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {

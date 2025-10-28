@@ -3,11 +3,15 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import DoctorNotes from "./pages/DoctorNotes";
 import DoctorCreate from "./pages/DoctorCreate";
 import Appointments from "./pages/Appointments";
 import Messages from "./pages/Messages";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import { NotificationProvider } from "./context/NotificationContext";
+import { LanguageProvider } from "./context/LanguageContext";
+import NotificationsPage from "./pages/Notifications";
 
 export default function App() {
   const [user, setUserState] = useState(() => {
@@ -67,8 +71,8 @@ export default function App() {
     if (location.pathname === "/doctor/create" || location.pathname === "/doctor-create") return;
 
     // Define valid routes for each user role
-    const validPatientRoutes = ["/patient", "/patient/appointments", "/patient/messages", "/patient/reports", "/patient/settings"];
-    const validDoctorRoutes = ["/doctor", "/doctor/appointments", "/doctor/messages", "/doctor/reports", "/doctor/settings"];
+    const validPatientRoutes = ["/patient", "/patient/appointments", "/patient/messages", "/patient/reports", "/patient/notifications", "/patient/settings"];
+    const validDoctorRoutes = ["/doctor", "/doctor/appointments", "/doctor/messages", "/doctor/reports", "/doctor/notes", "/doctor/notifications", "/doctor/settings"];
     const publicRoutes = ["/login", "/doctor/create", "/doctor-create"];
 
     if (user) {
@@ -114,8 +118,10 @@ export default function App() {
     { name: 'Appointments', href: user?.role === 'doctor' ? '/doctor/appointments' : '/patient/appointments', icon: 'Calendar' },
     { name: 'Messages', href: user?.role === 'doctor' ? '/doctor/messages' : '/patient/messages', icon: 'MessageCircle' },
     { name: 'Reports', href: user?.role === 'doctor' ? '/doctor/reports' : '/patient/reports', icon: 'FileText' },
+    user?.role === 'doctor' ? { name: 'Notes', href: '/doctor/notes', icon: 'NotebookPen' } : null,
+    { name: 'Notifications', href: user?.role === 'doctor' ? '/doctor/notifications' : '/patient/notifications', icon: 'Bell' },
     { name: 'Settings', href: user?.role === 'doctor' ? '/doctor/settings' : '/patient/settings', icon: 'Settings' },
-  ];
+  ].filter(Boolean);
 
   const isActiveRoute = (href) => {
     return location.pathname === href;
@@ -124,7 +130,9 @@ export default function App() {
   const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   return (
-    <div className="flex h-screen dashboard-bg">
+    <LanguageProvider>
+      <NotificationProvider user={user}>
+        <div className="flex h-screen dashboard-bg">
       {/* Sidebar */}
       <div className="sidebar flex flex-col">
         {/* Logo */}
@@ -220,26 +228,31 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-8">
-          <Routes>
-            <Route path="/login" element={<Login onLogin={setUser} />} />
-            <Route path="/doctor/create" element={<DoctorCreate onLogin={setUser} />} />
-            <Route path="/doctor-create" element={<DoctorCreate onLogin={setUser} />} />
-            <Route path="/patient" element={<PatientDashboard user={user} />} />
-            <Route path="/doctor" element={<DoctorDashboard user={user} />} />
-            <Route path="/patient/appointments" element={<Appointments user={user} />} />
-            <Route path="/doctor/appointments" element={<Appointments user={user} />} />
-            <Route path="/patient/messages" element={<Messages user={user} />} />
-            <Route path="/doctor/messages" element={<Messages user={user} />} />
-            <Route path="/patient/reports" element={<Reports user={user} />} />
-            <Route path="/doctor/reports" element={<Reports user={user} />} />
-            <Route path="/patient/settings" element={<Settings user={user} />} />
-            <Route path="/doctor/settings" element={<Settings user={user} />} />
-          </Routes>
-        </main>
-      </div>
-    </div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-visible">
+          <main className="flex-1 overflow-y-auto p-8">
+            <Routes>
+              <Route path="/login" element={<Login onLogin={setUser} />} />
+              <Route path="/doctor/create" element={<DoctorCreate onLogin={setUser} />} />
+              <Route path="/doctor-create" element={<DoctorCreate onLogin={setUser} />} />
+              <Route path="/patient" element={<PatientDashboard user={user} />} />
+              <Route path="/doctor" element={<DoctorDashboard user={user} />} />
+              <Route path="/patient/appointments" element={<Appointments user={user} />} />
+              <Route path="/doctor/appointments" element={<Appointments user={user} />} />
+              <Route path="/patient/messages" element={<Messages user={user} />} />
+              <Route path="/doctor/messages" element={<Messages user={user} />} />
+              <Route path="/patient/reports" element={<Reports user={user} />} />
+              <Route path="/doctor/reports" element={<Reports user={user} />} />
+              <Route path="/doctor/notes" element={<DoctorNotes user={user} />} />
+              <Route path="/patient/notifications" element={<NotificationsPage user={user} />} />
+              <Route path="/doctor/notifications" element={<NotificationsPage user={user} />} />
+              <Route path="/patient/settings" element={<Settings user={user} />} />
+              <Route path="/doctor/settings" element={<Settings user={user} />} />
+            </Routes>
+          </main>
+        </div>
+        </div>
+      </NotificationProvider>
+    </LanguageProvider>
   );
 }

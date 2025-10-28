@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Chart from "chart.js/auto";
+import { useLanguage } from "../context/LanguageContext";
 
 // Auto-detect API URL for both development and production
 const getApiUrl = () => {
@@ -16,10 +18,10 @@ const token = () => localStorage.getItem("token");
 const user = () => JSON.parse(localStorage.getItem("user") || "null");
 
 export default function DoctorDashboard() {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [openNotes, setOpenNotes] = useState({});
-  const [noteInputs, setNoteInputs] = useState({});
+  const { lang, setLang } = useLanguage();
   const [openCall, setOpenCall] = useState(null);
   const [openChat, setOpenChat] = useState(null);
   const [chatInputs, setChatInputs] = useState({});
@@ -27,6 +29,51 @@ export default function DoctorDashboard() {
 
   const vitalsChartRef = useRef(null);
   const bpChartRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("lang_doctor");
+    }
+  }, []);
+
+  const i18n = {
+    en: {
+      doctor_dashboard: "Doctor Dashboard",
+      welcome: (name) => `Welcome ${name || 'Doctor'}! Manage your appointments and patient care.`,
+      doctor_directory: "Doctor Directory",
+      no_doctors: "No doctors found",
+      appointment_requests: "Appointment Requests",
+      live_call: "Live Call",
+      chat: "Chat",
+      view_notes: "Notes",
+    },
+    hi: {
+      doctor_dashboard: "डॉक्टर डैशबोर्ड",
+      welcome: (name) => `${name || 'डॉक्टर'} जी, स्वागत है! अपनी अपॉइंटमेंट्स और मरीजों की देखभाल करें।`,
+      doctor_directory: "डॉक्टर निर्देशिका",
+      no_doctors: "कोई डॉक्टर नहीं मिला",
+      appointment_requests: "अपॉइंटमेंट अनुरोध",
+      live_call: "लाइव कॉल",
+      chat: "चैट",
+      view_notes: "नोट्स",
+    },
+    mr: {
+      doctor_dashboard: "डॉक्टर डॅशबोर्ड",
+      welcome: (name) => `${name || 'डॉक्टर'} सर, स्वागत आहे! आपल्या अपॉइंटमेंट्स आणि रुग्णांची काळजी घ्या।`,
+      doctor_directory: "डॉक्टर संचिका",
+      no_doctors: "कोणतेही डॉक्टर सापडले नाहीत",
+      appointment_requests: "अपॉइंटमेंट विनंत्या",
+      live_call: "लाईव्ह कॉल",
+      chat: "चॅट",
+      view_notes: "नोंदी",
+    }
+  };
+
+  const t = (key, ...args) => {
+    const val = i18n[lang]?.[key];
+    if (typeof val === "function") return val(...args);
+    return val || i18n.en[key] || key;
+  };
 
   // Helpers
   const isSameDay = (d1, d2) =>
@@ -240,37 +287,6 @@ export default function DoctorDashboard() {
     return completedAt ? isSameDay(completedAt, today) : false;
   }).length;
 
-  const toggleNotes = (id) => {
-    setOpenNotes(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const addNote = async (id) => {
-    const text = (noteInputs[id] || "").trim();
-    if (!text) return;
-
-    try {
-      const res = await fetch(`${API}/appointments/${id}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token()}`,
-        },
-        body: JSON.stringify({ text }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAppointments(prev => prev.map(a => a._id === id ? data : a));
-        setNoteInputs(prev => ({ ...prev, [id]: "" }));
-        if (!openNotes[id]) {
-          setOpenNotes(prev => ({ ...prev, [id]: true }));
-        }
-      }
-    } catch (error) {
-      console.error('Add note error:', error);
-    }
-  };
-
   const sendChat = async (id) => {
     const text = (chatInputs[id] || "").trim();
     if (!text) return;
@@ -300,8 +316,40 @@ export default function DoctorDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between" data-aos="fade-down">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome {user()?.name}! Manage your appointments and patient care.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('doctor_dashboard')}</h1>
+          <p className="text-gray-600 dark:text-slate-300 mt-1">{t('welcome', user()?.name)}</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setLang("en")}
+            className={`px-3 py-1 rounded ${
+              lang === "en"
+                ? "bg-teal-600 text-white"
+                : "bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-slate-200"
+            }`}
+          >
+            EN
+          </button>
+          <button
+            onClick={() => setLang("hi")}
+            className={`px-3 py-1 rounded ${
+              lang === "hi"
+                ? "bg-teal-600 text-white"
+                : "bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-slate-200"
+            }`}
+          >
+            हिं
+          </button>
+          <button
+            onClick={() => setLang("mr")}
+            className={`px-3 py-1 rounded ${
+              lang === "mr"
+                ? "bg-teal-600 text-white"
+                : "bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-slate-200"
+            }`}
+          >
+            म
+          </button>
         </div>
       </div>
 
@@ -309,7 +357,7 @@ export default function DoctorDashboard() {
       <div className="card card-hover" data-aos="fade-up">
         <div className="flex items-center space-x-2 mb-6">
           <i data-lucide="users" className="w-5 h-5 text-teal-600"></i>
-          <h2 className="text-xl font-semibold text-gray-900">Doctor Directory</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('doctor_directory')}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {doctors.map((doctor) => (
@@ -334,7 +382,7 @@ export default function DoctorDashboard() {
           {doctors.length === 0 && (
             <div className="col-span-full text-center py-8">
               <i data-lucide="users" className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3"></i>
-              <p className="text-gray-500 dark:text-gray-400">No doctors found</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('no_doctors')}</p>
             </div>
           )}
         </div>
@@ -347,7 +395,7 @@ export default function DoctorDashboard() {
           <div className="card card-hover" data-aos="fade-up">
             <div className="flex items-center space-x-2 mb-6">
               <i data-lucide="clock" className="w-5 h-5 text-teal-600"></i>
-              <h2 className="text-xl font-semibold text-gray-900">Appointment Requests</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('appointment_requests')}</h2>
             </div>
             <div className="space-y-4">
               {appointments
@@ -395,10 +443,16 @@ export default function DoctorDashboard() {
                         {openChat === a._id ? 'Chat Open' : 'Chat'}
                       </button>
                       <button
-                        onClick={() => toggleNotes(a._id)}
+                        onClick={() => {
+                          if (a.patient?._id) {
+                            navigate(`/doctor/notes?patientId=${a.patient._id}`);
+                          } else {
+                            navigate('/doctor/notes');
+                          }
+                        }}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm"
                       >
-                        Notes
+                        {t('view_notes')}
                       </button>
                       <button
                         onClick={() => updateStatus(a._id, "declined")}
@@ -408,38 +462,7 @@ export default function DoctorDashboard() {
                       </button>
                     </div>
 
-                    {openNotes[a._id] && (
-                      <div className="mt-3 border-t pt-3">
-                        <h4 className="text-sm font-semibold mb-2">Notes</h4>
-                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                          {(a.notes || []).map((n, idx) => (
-                            <div key={idx} className="text-sm text-gray-700">
-                              <span className="font-medium">Note:</span> {n.text}
-                              <span className="ml-2 text-xs text-gray-500">
-                                {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
-                              </span>
-                            </div>
-                          ))}
-                          {(!a.notes || a.notes.length === 0) && (
-                            <p className="text-sm text-gray-500">No notes yet.</p>
-                          )}
-                        </div>
-                        <div className="mt-2 flex space-x-2">
-                          <input
-                            value={noteInputs[a._id] || ""}
-                            onChange={(e) => setNoteInputs(prev => ({ ...prev, [a._id]: e.target.value }))}
-                            placeholder="Add a note"
-                            className="flex-1 border px-2 py-1 rounded text-sm"
-                          />
-                          <button
-                            onClick={() => addNote(a._id)}
-                            className="btn-primary px-3 py-1 text-sm"
-                          >
-                            Add
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    {/* Inline notes removed in favour of dedicated notes workspace */}
                   </div>
                 ))}
             </div>
@@ -543,12 +566,12 @@ export default function DoctorDashboard() {
 
                       {/* Action Buttons */}
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {a.meetingLink && (
+                        {a.meetingLink && a.status === 'accepted' && (
                           <>
                             {String(a.meetingLink).startsWith('jitsi:') ? (
                               <button
                                 onClick={() => setOpenCall(a._id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
                               >
                                 <i data-lucide="video" className="w-3.5 h-3.5"></i>
                                 Open Call
@@ -568,68 +591,37 @@ export default function DoctorDashboard() {
                         )}
                         
                         <button
-                          onClick={() => setOpenChat(a._id)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm ${
-                            openChat === a._id
-                              ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-                              : 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800'
-                          }`}
+                          onClick={() => navigate(`/doctor/messages?appointmentId=${a._id}`)}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 transition-colors shadow-sm"
                         >
                           <i data-lucide="message-circle" className="w-3.5 h-3.5"></i>
-                          {openChat === a._id ? 'Chat Open' : 'Chat'}
+                          Chat
                         </button>
                         
                         <button
                           onClick={() => updateStatus(a._id, "completed")}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 border border-green-200 dark:border-green-800 transition-colors shadow-sm"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 border border-green-200 dark:border-green-800 transition-colors shadow-sm"
                         >
                           <i data-lucide="check-circle" className="w-3.5 h-3.5"></i>
                           Mark Done
                         </button>
                         
                         <button
-                          onClick={() => toggleNotes(a._id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 transition-colors shadow-sm"
+                          onClick={() => {
+                            if (a.patient?._id) {
+                              navigate(`/doctor/notes?patientId=${a.patient._id}`);
+                            } else {
+                              navigate('/doctor/notes');
+                            }
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 transition-colors shadow-sm"
                         >
-                          <i data-lucide={openNotes[a._id] ? "chevron-up" : "file-text"} className="w-3.5 h-3.5"></i>
-                          {openNotes[a._id] ? 'Hide Notes' : 'Show Notes'}
+                          <i data-lucide="file-text" className="w-3.5 h-3.5"></i>
+                          {t('view_notes')}
                         </button>
                       </div>
 
-                      {/* Notes Section */}
-                      {openNotes[a._id] && (
-                        <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700">
-                          <div className="space-y-2 max-h-32 overflow-y-auto mb-3">
-                            {(a.notes || []).map((n, idx) => (
-                              <div key={idx} className="p-2 bg-gray-50 dark:bg-slate-800 rounded text-sm">
-                                <span className="font-medium text-gray-900 dark:text-white">Note:</span>
-                                <span className="ml-2 text-gray-700 dark:text-slate-300">{n.text}</span>
-                                <div className="mt-1 text-xs text-gray-500 dark:text-slate-500">
-                                  {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
-                                </div>
-                              </div>
-                            ))}
-                            {(!a.notes || a.notes.length === 0) && (
-                              <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-2">No notes yet.</p>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <input
-                              value={noteInputs[a._id] || ""}
-                              onChange={(e) => setNoteInputs(prev => ({ ...prev, [a._id]: e.target.value }))}
-                              placeholder="Add a note..."
-                              className="flex-1 border border-gray-300 dark:border-slate-600 px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            />
-                            <button 
-                              onClick={() => addNote(a._id)} 
-                              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 transition-colors shadow-sm"
-                            >
-                              <i data-lucide="plus" className="w-4 h-4"></i>
-                              Add
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      {/* Inline notes removed in favour of dedicated notes workspace */}
                     </div>
                   ))}
               </div>
